@@ -770,7 +770,8 @@ the report was built from, and point a later standalone run straight at it.
 
 | Param | Default | Description |
 |---|---|---|
-| `--run_medi` | `false` | Quantify foods from HUMAnN's nucleotide-unaligned reads |
+| `--run_medi` | `false` | Quantify foods with MEDI (MGX only) |
+| `--medi_input` | `humann` | Reads MEDI classifies: `humann` (HUMAnN 4 nucleotide-unaligned reads; needs functional profiling) or `kneaddata` (full cleaned reads, right after QC) |
 | `--medi_db` | *required when enabled* | Full MEDI Kraken2/Bracken DB, including `taxo.k2d`, `taxonomy/` and 150 bp Bracken distributions |
 | `--medi_food_matches` | *required when enabled* | MEDI food-to-taxon matches table, passed first to `quantify.R` |
 | `--medi_food_contents` | *required when enabled* | MEDI food contents table, passed second to `quantify.R` |

@@ -75,7 +75,12 @@ workflow MGX {
 
     // ── Food DNA quantification (MEDI) ────────────────────────────────────
     if (params.run_medi) {
-        MEDI(FUNCTIONAL_PROFILING.out.unaligned_reads, '')
+        // humann: HUMAnN's nucleotide-unaligned reads (a small FASTA, but MEDI
+        // waits for HUMAnN). kneaddata: the full cleaned reads, straight after QC.
+        medi_reads = params.medi_input == 'kneaddata'
+            ? cleaned.map { meta, r -> tuple(meta.id, r) }
+            : FUNCTIONAL_PROFILING.out.unaligned_reads
+        MEDI(medi_reads, '')
     }
 
     // ── Viral profiling (BAQLaVa) ──────────────────────────────────────────
