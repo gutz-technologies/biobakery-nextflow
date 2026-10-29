@@ -775,12 +775,13 @@ the report was built from, and point a later standalone run straight at it.
 | `--medi_db` | *required when enabled* | Full MEDI Kraken2/Bracken DB, including `taxo.k2d`, `taxonomy/` and 150 bp Bracken distributions |
 | `--medi_food_matches` | *required when enabled* | MEDI food-to-taxon matches table, passed first to `quantify.R` |
 | `--medi_food_contents` | *required when enabled* | MEDI food contents table, passed second to `quantify.R` |
-| `--medi_container` | `colinbrislawn/medi:0.2.1` | Kraken2, Architeuthis, Bracken and MEDI tools |
+| `--medi_container` | `colinbrislawn/medi:1.0.1` | Kraken2, Architeuthis, Bracken and MEDI tools |
 | `--medi_biom_container` | `colinbrislawn/metaphlan:4.2.4` | Python BIOM converter dependencies |
 | `--medi_multiqc_container` | `ghcr.io/multiqc/multiqc:v1.22.3` | MultiQC |
 
-Requires `--workflow mgx --run_functional_profiling true --humann_version humann_v4a`
-and taxonomic profiling enabled. Do not pass `--remove-temp-output` in
+With `--medi_input humann` (default), requires `--workflow mgx
+--run_functional_profiling true --humann_version humann_v4a` and taxonomic
+profiling enabled. Do not pass `--remove-temp-output` in
 `--humann_options`: MEDI consumes `<sample>_humann_temp/<sample>_bowtie2_unaligned.fa`.
 These are the reads before the translated search, already QC'd and single-end;
 MEDI skips fastp. MTX and MGX+MTX are rejected because MEDI quantifies food DNA.
@@ -795,8 +796,18 @@ or BIOM tables are produced. The reference's empty-level fallbacks are retained.
 The full Kraken2 database needs about **415 GB RAM**. Set `--max_memory 450.GB`
 (or a suitable higher ceiling) on a node with enough memory; the default 128 GB
 cap is too small. Kraken2 requests 8 CPUs and 24 hours, capped by `max_*`.
-Enable Docker or Apptainer in the runtime config and bind the MEDI database path;
-food tables are staged as process inputs. Local profiles otherwise expect tools
+Enable Docker or Apptainer in the runtime config. The two kinds of MEDI input
+reach tasks differently:
+
+- `--medi_db` is read in place, not staged: Nextflow does not know Kraken2,
+  Bracken and Architeuthis need it. The path must already exist inside every
+  task, e.g. a shared filesystem or a bind mount, or synced to each cloud worker.
+- `--medi_food_matches` and `--medi_food_contents` are staged as process inputs
+  from where Nextflow runs. They must be readable from the launch (head) node:
+  a local path there, or an `s3://` / `https://` path. A path that exists only
+  on the workers fails with `Can't stage file`.
+
+Local profiles otherwise expect tools
 on PATH. Also configure compatible HUMAnN 4 and MetaPhlAn tools/databases and the
 KneadData host database, as for an ordinary MGX run.
 
