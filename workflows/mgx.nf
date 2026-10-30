@@ -6,6 +6,7 @@ include { CHECK_INPUTS }         from '../subworkflows/check_inputs.nf'
 include { QUALITY_CONTROL }      from '../subworkflows/quality_control.nf'
 include { TAXONOMIC_PROFILING }  from '../subworkflows/taxonomic_profiling.nf'
 include { FUNCTIONAL_PROFILING } from '../subworkflows/functional_profiling.nf'
+include { MEDI }                 from '../subworkflows/medi.nf'
 include { VIRAL_PROFILING }      from '../subworkflows/viral_profiling.nf'
 include { STRAIN_PROFILING }     from '../subworkflows/strain_profiling.nf'
 include { version_log }          from '../modules/utils/version_log/main.nf'
@@ -70,6 +71,11 @@ workflow MGX {
     // ── Functional profiling (HUMAnN) ─────────────────────────────────────
     if (params.run_functional_profiling) {
         FUNCTIONAL_PROFILING(cleaned, TAXONOMIC_PROFILING.out.profile, '')
+    }
+
+    // ── Food DNA quantification (MEDI) ────────────────────────────────────
+    if (params.run_medi) {
+        MEDI(FUNCTIONAL_PROFILING.out.unaligned_reads, '')
     }
 
     // ── Viral profiling (BAQLaVa) ──────────────────────────────────────────

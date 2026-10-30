@@ -24,7 +24,7 @@ How to read one:
   below the diagram, not in the picture.
 
 Optional stages that are off by default (`--run_viral_profiling`,
-`--run_strain_profiling`) are drawn as if enabled, so the diagram shows
+`--run_strain_profiling`, `--run_medi`) are drawn as if enabled, so the diagram shows
 everything a workflow can do.
 
 ## How the pieces fit
@@ -70,7 +70,7 @@ flowchart TB
         direction LR
         SIXTEENS("<b>SIXTEENS</b><br/><i>--workflow 16s</i><br/>16S rRNA amplicon workflow — stub")
         ASSEMBLY("<b>ASSEMBLY</b><br/><i>--workflow assembly</i><br/>Full MAG assembly → binning → SGB<br/>clustering pipeline.<br/><i>wires 2 stages</i><br/>· QUALITY_CONTROL<br/>· CHECK_INPUTS<br/><i>+ 17 steps of its own</i>")
-        MGX("<b>MGX</b><br/><i>--workflow mgx</i><br/>Whole Metagenome Shotgun (MGX)<br/>workflow<br/><i>wires 7 stages</i><br/>· QUALITY_CONTROL<br/>· TAXONOMIC_PROFILING<br/>· FUNCTIONAL_PROFILING<br/>· VIRAL_PROFILING<br/>· STRAIN_PROFILING<br/>· CHECK_INPUTS<br/>· REPORTING<br/><i>+ 3 steps of its own</i>")
+        MGX("<b>MGX</b><br/><i>--workflow mgx</i><br/>Whole Metagenome Shotgun (MGX)<br/>workflow<br/><i>wires 8 stages</i><br/>· QUALITY_CONTROL<br/>· TAXONOMIC_PROFILING<br/>· FUNCTIONAL_PROFILING<br/>· VIRAL_PROFILING<br/>· STRAIN_PROFILING<br/>· CHECK_INPUTS<br/>· MEDI<br/>· REPORTING<br/><i>+ 3 steps of its own</i>")
         MGX_MTX("<b>MGX_MTX</b><br/><i>--workflow mgx_mtx</i><br/>Paired whole metagenome +<br/>metatranscriptome workflow.<br/><i>wires 6 stages</i><br/>· QUALITY_CONTROL<br/>· TAXONOMIC_PROFILING<br/>· FUNCTIONAL_PROFILING<br/>· STRAIN_PROFILING<br/>· CHECK_INPUTS<br/>· REPORTING<br/><i>+ 5 steps of its own</i>")
         MTX("<b>MTX</b><br/><i>--workflow mtx</i><br/>Whole Metatranscriptome (MTX)<br/>workflow.<br/><i>wires 6 stages</i><br/>· QUALITY_CONTROL<br/>· TAXONOMIC_PROFILING<br/>· FUNCTIONAL_PROFILING<br/>· STRAIN_PROFILING<br/>· CHECK_INPUTS<br/>· REPORTING<br/><i>+ 3 steps of its own</i>")
         STATS("<b>STATS</b><br/><i>--workflow stats</i><br/>Statistics workflow — the Nextflow<br/>port of biobakery_workflows stats.<br/><i>+ 14 steps of its own</i>")
@@ -84,6 +84,7 @@ flowchart TB
         VIRAL_PROFILING("<b>VIRAL_PROFILING</b><br/>Viral profiling subworkflow:<br/>BAQLaVa<br/><i>called by</i><br/>· MGX<br/><i>1 step from 1 module</i>")
         STRAIN_PROFILING("<b>STRAIN_PROFILING</b><br/>Strain profiling subworkflow:<br/>StrainPhlAn SGB-level<br/><i>called by</i><br/>· MGX<br/>· MGX_MTX<br/>· MTX<br/><i>2 steps from 1 module</i>")
         CHECK_INPUTS("<b>CHECK_INPUTS</b><br/>Drop samples whose raw reads are<br/>truncated or corrupt before<br/>anything<br/><i>called by</i><br/>· ASSEMBLY<br/>· MGX<br/>· MGX_MTX<br/>· MTX<br/><i>1 step from 1 module</i>")
+        MEDI("<b>MEDI</b><br/>HUMAnN's nucleotide-unaligned<br/>reads are already QC'd, single-end<br/>FASTA.<br/><i>called by</i><br/>· MGX<br/><i>9 steps from 9 modules</i>")
         REPORTING("<b>REPORTING</b><br/>Run vis and/or stats at the end of<br/>a read-based workflow.<br/><i>called by</i><br/>· MGX<br/>· MGX_MTX<br/>· MTX<br/><i>chains STATS + VIS</i>")
         mtx_common["<b>mtx_common.nf</b><br/><i>Groovy helper, not a stage</i><br/>The KneadData reference database<br/>set for metatranscriptome reads.<br/><i>called by</i><br/>· MGX_MTX<br/>· MTX"]
         read_input["<b>read_input.nf</b><br/><i>Groovy helper, not a stage</i><br/>Build an input read channel,<br/>detecting library layout from the<br/>filenames<br/><i>called by</i><br/>· ASSEMBLY<br/>· MGX<br/>· MGX_MTX<br/>· MTX"]
@@ -100,6 +101,7 @@ flowchart TB
         mods7["<b>for VIRAL_PROFILING</b><br/>viral/baqlava <i>×1</i>"]
         mods8["<b>for STRAIN_PROFILING</b><br/>strainphlan <i>×2</i>"]
         mods9["<b>for CHECK_INPUTS</b><br/>utils/check_reads <i>×1</i>"]
+        mods10["<b>for MEDI</b><br/>medi/add_lineage <i>×1</i><br/>medi/architeuthis_filter <i>×1</i><br/>medi/convert_medi_to_biom <i>×1</i><br/>medi/count_taxa <i>×1</i><br/>medi/kraken <i>×1</i><br/>medi/kraken_report <i>×1</i><br/>medi/merge_taxonomy <i>×1</i><br/>medi/multiqc <i>×1</i><br/>medi/quantify <i>×1</i>"]
         mods_shared["<b>called by more than one</b><br/>stats/feature_table<br/>&nbsp;&nbsp;<i>STATS, VIS</i><br/>utils/archive<br/>&nbsp;&nbsp;<i>STATS, VIS</i><br/>utils/merge_pairs<br/>&nbsp;&nbsp;<i>MGX, MGX_MTX, MTX</i><br/>utils/report_input<br/>&nbsp;&nbsp;<i>MGX, MGX_MTX, MTX</i><br/>utils/version_log<br/>&nbsp;&nbsp;<i>ASSEMBLY, MGX, MGX_MTX, MTX</i><br/>vis/identify_inputs<br/>&nbsp;&nbsp;<i>STATS, VIS</i>"]
     end
 
@@ -111,8 +113,8 @@ flowchart TB
     main_nf --> STATS
     main_nf --> VIS
 
-    MGX_MTX ~~~ VIRAL_PROFILING
-    VIRAL_PROFILING ~~~ mods0
+    MGX_MTX ~~~ STRAIN_PROFILING
+    STRAIN_PROFILING ~~~ mods0
 
     style L1 fill:#f8fafc00,stroke:#cbd5e1,stroke-width:1px,stroke-dasharray:6 4,color:#334155
     style L2 fill:#f8fafc00,stroke:#cbd5e1,stroke-width:1px,stroke-dasharray:6 4,color:#334155
@@ -150,7 +152,9 @@ flowchart TB
     classDef arch12 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
     class CHECK_INPUTS arch12
     classDef arch13 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
-    class REPORTING arch13
+    class MEDI arch13
+    classDef arch14 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
+    class REPORTING arch14
     classDef mod0 fill:#fef3c799,stroke:#d97706,stroke-width:1px,color:#78350f
     class mods0 mod0
     classDef mod1 fill:#f1f5f999,stroke:#94a3b8,stroke-width:1px,color:#334155
@@ -171,6 +175,8 @@ flowchart TB
     class mods8 mod8
     classDef mod9 fill:#f1f5f999,stroke:#94a3b8,stroke-width:1px,color:#334155
     class mods9 mod9
+    classDef mod10 fill:#f1f5f999,stroke:#94a3b8,stroke-width:1px,color:#334155
+    class mods10 mod10
     classDef modshared fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,stroke-dasharray:4 3,color:#334155
     class mods_shared modshared
     classDef helper fill:#ffffff,stroke:#cbd5e1,stroke-width:1px,color:#475569
@@ -182,7 +188,7 @@ flowchart TB
 
 | Workflow | `--workflow` | What it does | Steps |
 |---|---|---|---|
-| [mgx](#mgx) | `mgx` | Whole metagenome shotgun | 29 |
+| [mgx](#mgx) | `mgx` | Whole metagenome shotgun | 38 |
 | [mtx](#mtx) | `mtx` | Whole metatranscriptome shotgun | 28 |
 | [mgx_mtx](#mgx_mtx) | `mgx_mtx` | Paired metagenome + metatranscriptome | 29 |
 | [assembly](#assembly) | `assembly` | MAG assembly, binning and SGB clustering | 21 |
@@ -226,6 +232,18 @@ flowchart LR
         humann_count_features("<b>humann_count_features</b><br/>Count how many features each<br/>sample has above zero, per…")
         humann_feature_counts_merge("<b>humann_feature_counts_merge</b><br/>Merge the three<br/>per-feature-type count tables…")
         humann_log_counts("<b>humann_log_counts</b><br/>Read and species counts, taken<br/>from the per-sample HUMAnN…")
+    end
+    subgraph MEDI
+        direction TB
+        kraken("<b>kraken</b><br/>Classify HUMAnN<br/>nucleotide-unaligned reads…")
+        architeuthis_filter("<b>architeuthis_filter</b><br/>Filter Kraken2 mappings by<br/>consistency, entropy and…")
+        kraken_report("<b>kraken_report</b><br/>Build a Kraken2 report from<br/>the filtered mappings.")
+        count_taxa("<b>count_taxa</b><br/>Count D/G/S taxa with Bracken,<br/>one task per sample.")
+        merge_taxonomy("<b>merge_taxonomy</b><br/>Merge nonempty Bracken tables<br/>across samples, one task per…")
+        add_lineage("<b>add_lineage</b><br/>Add taxonomic lineages to the<br/>merged D/G/S tables.")
+        quantify("<b>quantify</b><br/>Quantify food abundance and<br/>content from the lineage…")
+        convert_medi_to_biom["<b>convert_medi_to_biom</b><br/>Convert food abundance,<br/>nutrients and compounds to…"]
+        multiqc["<b>multiqc</b><br/>Summarise filtered Kraken2<br/>reports with MultiQC."]
     end
     subgraph VIRAL_PROFILING
         direction TB
@@ -275,6 +293,7 @@ flowchart LR
     humann --> humann_join
     humann --> humann_renorm
     humann --> humann_log_counts
+    humann --> kraken
     humann_regroup_ecs --> humann_join
     humann_regroup_ecs --> humann_renorm
     humann_regroup --> humann_rename
@@ -286,6 +305,14 @@ flowchart LR
     humann_count_features --> stage_report_input
     humann_feature_counts_merge --> stage_report_input
     humann_log_counts --> stage_report_input
+    kraken --> architeuthis_filter
+    architeuthis_filter --> kraken_report
+    kraken_report --> count_taxa
+    kraken_report --> multiqc
+    count_taxa --> merge_taxonomy
+    merge_taxonomy --> add_lineage
+    add_lineage --> quantify
+    quantify --> convert_medi_to_biom
     sample2markers --> strainphlan
     stage_report_input --> identify_inputs
     stage_report_input --> feature_table
@@ -303,6 +330,7 @@ flowchart LR
     style QUALITY_CONTROL fill:#dbeafe22,stroke:#3b82f6,stroke-width:1px,stroke-dasharray:4 3,color:#3b82f6
     style TAXONOMIC_PROFILING fill:#dcfce722,stroke:#22c55e,stroke-width:1px,stroke-dasharray:4 3,color:#22c55e
     style FUNCTIONAL_PROFILING fill:#ede9fe22,stroke:#8b5cf6,stroke-width:1px,stroke-dasharray:4 3,color:#8b5cf6
+    style MEDI fill:#f1f5f922,stroke:#94a3b8,stroke-width:1px,stroke-dasharray:4 3,color:#94a3b8
     style VIRAL_PROFILING fill:#ffedd522,stroke:#f97316,stroke-width:1px,stroke-dasharray:4 3,color:#f97316
     style STRAIN_PROFILING fill:#ccfbf122,stroke:#14b8a6,stroke-width:1px,stroke-dasharray:4 3,color:#14b8a6
     style MGX fill:#f1f5f922,stroke:#94a3b8,stroke-width:1px,stroke-dasharray:4 3,color:#94a3b8
@@ -316,25 +344,31 @@ flowchart LR
     class metaphlan,metaphlan_bzip,metaphlan_merge,metaphlan_species_counts stage2
     classDef stage3 fill:#ede9fe,stroke:#8b5cf6,stroke-width:1.5px,color:#4c1d95
     class humann,humann_regroup_ecs,humann_regroup,humann_rename,humann_join,humann_renorm,humann_join_relab,humann_count_features,humann_feature_counts_merge,humann_log_counts stage3
-    classDef stage4 fill:#ffedd5,stroke:#f97316,stroke-width:1.5px,color:#7c2d12
-    class baqlava stage4
-    classDef stage5 fill:#ccfbf1,stroke:#14b8a6,stroke-width:1.5px,color:#134e4a
-    class sample2markers,strainphlan stage5
-    classDef stage6 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
-    class stage_report_input,version_log stage6
-    classDef stage7 fill:#fce7f3,stroke:#ec4899,stroke-width:1.5px,color:#831843
-    class identify_inputs,feature_table,trim_taxonomy,add_ec_names,vis_report,archive_output stage7
+    classDef stage4 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
+    class kraken,architeuthis_filter,kraken_report,count_taxa,merge_taxonomy,add_lineage,quantify,convert_medi_to_biom,multiqc stage4
+    classDef stage5 fill:#ffedd5,stroke:#f97316,stroke-width:1.5px,color:#7c2d12
+    class baqlava stage5
+    classDef stage6 fill:#ccfbf1,stroke:#14b8a6,stroke-width:1.5px,color:#134e4a
+    class sample2markers,strainphlan stage6
+    classDef stage7 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
+    class stage_report_input,version_log stage7
+    classDef stage8 fill:#fce7f3,stroke:#ec4899,stroke-width:1.5px,color:#831843
+    class identify_inputs,feature_table,trim_taxonomy,add_ec_names,vis_report,archive_output stage8
 
     linkStyle default stroke:#cbd5e1,stroke-width:1.5px
-    linkStyle 0,1,3,4,5,7,8,9,10,13,14,15,17,18,27,30,32,33,34,36,37,38,39,40 stroke:#475569,stroke-width:2px
+    linkStyle 0,1,3,4,5,7,8,9,10,13,14,15,17,18,24,28,31,33,34,35,45,46,47,48,49 stroke:#475569,stroke-width:2px
 ```
 
 | Step | What it does | Defined in | Publishes to |
 |---|---|---|---|
 | `add_ec_names` | Add EC names to the EC abundance table when they are missing. | `modules/vis/add_ec_names/main.nf` | `<outdir>/vis/ecs` |
+| `add_lineage` | Add taxonomic lineages to the merged D/G/S tables. | `modules/medi/add_lineage/main.nf` | `<outdir>/<subdir>medi` |
+| `architeuthis_filter` | Filter Kraken2 mappings by consistency, entropy and multiplicity. | `modules/medi/architeuthis_filter/main.nf` | `<outdir>/<subdir>medi/architeuthis` |
 | `archive_output` | Archive a report folder. | `modules/utils/archive/main.nf` | `<outdir>` |
 | `baqlava` | BAQLaVa — viral profiling | `modules/viral/baqlava/main.nf` | `<outdir>/baqlava` |
 | `check_reads` | Check one sample's raw reads for truncation and corruption | `modules/utils/check_reads/main.nf` | `` |
+| `convert_medi_to_biom` | Convert food abundance, nutrients and compounds to BIOM. | `modules/medi/convert_medi_to_biom/main.nf` | `<outdir>/<subdir>medi/biom` |
+| `count_taxa` | Count D/G/S taxa with Bracken, one task per sample. | `modules/medi/count_taxa/main.nf` | `<outdir>/<subdir>medi/bracken` |
 | `feature_table` | Build one feature table (taxonomy, pathways or any other data file). | `modules/stats/feature_table/main.nf` | `<outdir>/stats/features` |
 | `humann` | HUMAnN — functional profiling | `modules/humann/main.nf` | `<outdir>/<subdir>humann/<params.humann_version>/main` |
 | `humann_count_features` | Count how many features each sample has above zero, per feature type. | `modules/utils/humann_merge/main.nf` | `<outdir>/<subdir>humann/<params.humann_version>/counts` |
@@ -348,11 +382,16 @@ flowchart LR
 | `humann_renorm` | Renormalise a per-sample HUMAnN table from RPK to relative abundance. | `modules/utils/humann_renorm/main.nf` | `<outdir>/<subdir>humann/<params.humann_version>/relab/<feature>` |
 | `identify_inputs` | Identify the bioBakery data files in an input folder. | `modules/vis/identify_inputs/main.nf` | `<outdir>/<report_type>` |
 | `kneaddata_read_counts` | Compile the per-sample KneadData logs into one read count table. | `modules/kneaddata/main.nf` | `<outdir>/<subdir>kneaddata/merged` |
+| `kraken` | Classify HUMAnN nucleotide-unaligned reads with the MEDI Kraken2 database. | `modules/medi/kraken/main.nf` | `<outdir>/<subdir>medi/kraken2/raw` |
+| `kraken_report` | Build a Kraken2 report from the filtered mappings. | `modules/medi/kraken_report/main.nf` | `<outdir>/<subdir>medi/kraken2` |
+| `merge_taxonomy` | Merge nonempty Bracken tables across samples, one task per rank. | `modules/medi/merge_taxonomy/main.nf` | `<outdir>/<subdir>medi/merged` |
 | `metaphlan` | MetaPhlAn — taxonomic profiling | `modules/metaphlan/main.nf` | `<outdir>/<subdir>metaphlan/<params.metaphlan_index>` |
 | `metaphlan_bzip` | Compress MetaPhlAn SAM file (saves significant disk space) | `modules/metaphlan/main.nf` | `<outdir>/<subdir>metaphlan/bzip` |
 | `metaphlan_merge` | Merge per-sample MetaPhlAn profiles into a single table | `modules/metaphlan/main.nf` | `<outdir>/<subdir>metaphlan` |
 | `metaphlan_species_counts` | Count the species called in each sample, from the merged profile. | `modules/metaphlan/main.nf` | `<outdir>/<subdir>metaphlan/merged` |
+| `multiqc` | Summarise filtered Kraken2 reports with MultiQC. | `modules/medi/multiqc/main.nf` | `<outdir>/<subdir>medi` |
 | `paired_end_kneaddata` | KneadData QC — paired-end reads | `modules/kneaddata/main.nf` | `<outdir>/<subdir>kneaddata` |
+| `quantify` | Quantify food abundance and content from the lineage tables. | `modules/medi/quantify/main.nf` | `<outdir>/<subdir>medi` |
 | `sample2markers` | StrainPhlAn step 1: extract per-sample strain markers from MetaPhlAn SAM output | `modules/strainphlan/main.nf` | `<outdir>/strainphlan/markers` |
 | `single_end_kneaddata` | KneadData QC — single-end reads | `modules/kneaddata/main.nf` | `<outdir>/<subdir>kneaddata` |
 | `stage_report_input` | Build a bioBakery-standard output folder for vis and stats to read. | `modules/utils/report_input/main.nf` | `<outdir>` |

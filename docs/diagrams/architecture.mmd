@@ -10,7 +10,7 @@ flowchart TB
         direction LR
         SIXTEENS("<b>SIXTEENS</b><br/><i>--workflow 16s</i><br/>16S rRNA amplicon workflow — stub")
         ASSEMBLY("<b>ASSEMBLY</b><br/><i>--workflow assembly</i><br/>Full MAG assembly → binning → SGB<br/>clustering pipeline.<br/><i>wires 2 stages</i><br/>· QUALITY_CONTROL<br/>· CHECK_INPUTS<br/><i>+ 17 steps of its own</i>")
-        MGX("<b>MGX</b><br/><i>--workflow mgx</i><br/>Whole Metagenome Shotgun (MGX)<br/>workflow<br/><i>wires 7 stages</i><br/>· QUALITY_CONTROL<br/>· TAXONOMIC_PROFILING<br/>· FUNCTIONAL_PROFILING<br/>· VIRAL_PROFILING<br/>· STRAIN_PROFILING<br/>· CHECK_INPUTS<br/>· REPORTING<br/><i>+ 3 steps of its own</i>")
+        MGX("<b>MGX</b><br/><i>--workflow mgx</i><br/>Whole Metagenome Shotgun (MGX)<br/>workflow<br/><i>wires 8 stages</i><br/>· QUALITY_CONTROL<br/>· TAXONOMIC_PROFILING<br/>· FUNCTIONAL_PROFILING<br/>· VIRAL_PROFILING<br/>· STRAIN_PROFILING<br/>· CHECK_INPUTS<br/>· MEDI<br/>· REPORTING<br/><i>+ 3 steps of its own</i>")
         MGX_MTX("<b>MGX_MTX</b><br/><i>--workflow mgx_mtx</i><br/>Paired whole metagenome +<br/>metatranscriptome workflow.<br/><i>wires 6 stages</i><br/>· QUALITY_CONTROL<br/>· TAXONOMIC_PROFILING<br/>· FUNCTIONAL_PROFILING<br/>· STRAIN_PROFILING<br/>· CHECK_INPUTS<br/>· REPORTING<br/><i>+ 5 steps of its own</i>")
         MTX("<b>MTX</b><br/><i>--workflow mtx</i><br/>Whole Metatranscriptome (MTX)<br/>workflow.<br/><i>wires 6 stages</i><br/>· QUALITY_CONTROL<br/>· TAXONOMIC_PROFILING<br/>· FUNCTIONAL_PROFILING<br/>· STRAIN_PROFILING<br/>· CHECK_INPUTS<br/>· REPORTING<br/><i>+ 3 steps of its own</i>")
         STATS("<b>STATS</b><br/><i>--workflow stats</i><br/>Statistics workflow — the Nextflow<br/>port of biobakery_workflows stats.<br/><i>+ 14 steps of its own</i>")
@@ -24,6 +24,7 @@ flowchart TB
         VIRAL_PROFILING("<b>VIRAL_PROFILING</b><br/>Viral profiling subworkflow:<br/>BAQLaVa<br/><i>called by</i><br/>· MGX<br/><i>1 step from 1 module</i>")
         STRAIN_PROFILING("<b>STRAIN_PROFILING</b><br/>Strain profiling subworkflow:<br/>StrainPhlAn SGB-level<br/><i>called by</i><br/>· MGX<br/>· MGX_MTX<br/>· MTX<br/><i>2 steps from 1 module</i>")
         CHECK_INPUTS("<b>CHECK_INPUTS</b><br/>Drop samples whose raw reads are<br/>truncated or corrupt before<br/>anything<br/><i>called by</i><br/>· ASSEMBLY<br/>· MGX<br/>· MGX_MTX<br/>· MTX<br/><i>1 step from 1 module</i>")
+        MEDI("<b>MEDI</b><br/>HUMAnN's nucleotide-unaligned<br/>reads are already QC'd, single-end<br/>FASTA.<br/><i>called by</i><br/>· MGX<br/><i>9 steps from 9 modules</i>")
         REPORTING("<b>REPORTING</b><br/>Run vis and/or stats at the end of<br/>a read-based workflow.<br/><i>called by</i><br/>· MGX<br/>· MGX_MTX<br/>· MTX<br/><i>chains STATS + VIS</i>")
         mtx_common["<b>mtx_common.nf</b><br/><i>Groovy helper, not a stage</i><br/>The KneadData reference database<br/>set for metatranscriptome reads.<br/><i>called by</i><br/>· MGX_MTX<br/>· MTX"]
         read_input["<b>read_input.nf</b><br/><i>Groovy helper, not a stage</i><br/>Build an input read channel,<br/>detecting library layout from the<br/>filenames<br/><i>called by</i><br/>· ASSEMBLY<br/>· MGX<br/>· MGX_MTX<br/>· MTX"]
@@ -40,6 +41,7 @@ flowchart TB
         mods7["<b>for VIRAL_PROFILING</b><br/>viral/baqlava <i>×1</i>"]
         mods8["<b>for STRAIN_PROFILING</b><br/>strainphlan <i>×2</i>"]
         mods9["<b>for CHECK_INPUTS</b><br/>utils/check_reads <i>×1</i>"]
+        mods10["<b>for MEDI</b><br/>medi/add_lineage <i>×1</i><br/>medi/architeuthis_filter <i>×1</i><br/>medi/convert_medi_to_biom <i>×1</i><br/>medi/count_taxa <i>×1</i><br/>medi/kraken <i>×1</i><br/>medi/kraken_report <i>×1</i><br/>medi/merge_taxonomy <i>×1</i><br/>medi/multiqc <i>×1</i><br/>medi/quantify <i>×1</i>"]
         mods_shared["<b>called by more than one</b><br/>stats/feature_table<br/>&nbsp;&nbsp;<i>STATS, VIS</i><br/>utils/archive<br/>&nbsp;&nbsp;<i>STATS, VIS</i><br/>utils/merge_pairs<br/>&nbsp;&nbsp;<i>MGX, MGX_MTX, MTX</i><br/>utils/report_input<br/>&nbsp;&nbsp;<i>MGX, MGX_MTX, MTX</i><br/>utils/version_log<br/>&nbsp;&nbsp;<i>ASSEMBLY, MGX, MGX_MTX, MTX</i><br/>vis/identify_inputs<br/>&nbsp;&nbsp;<i>STATS, VIS</i>"]
     end
 
@@ -51,8 +53,8 @@ flowchart TB
     main_nf --> STATS
     main_nf --> VIS
 
-    MGX_MTX ~~~ VIRAL_PROFILING
-    VIRAL_PROFILING ~~~ mods0
+    MGX_MTX ~~~ STRAIN_PROFILING
+    STRAIN_PROFILING ~~~ mods0
 
     style L1 fill:#f8fafc00,stroke:#cbd5e1,stroke-width:1px,stroke-dasharray:6 4,color:#334155
     style L2 fill:#f8fafc00,stroke:#cbd5e1,stroke-width:1px,stroke-dasharray:6 4,color:#334155
@@ -90,7 +92,9 @@ flowchart TB
     classDef arch12 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
     class CHECK_INPUTS arch12
     classDef arch13 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
-    class REPORTING arch13
+    class MEDI arch13
+    classDef arch14 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
+    class REPORTING arch14
     classDef mod0 fill:#fef3c799,stroke:#d97706,stroke-width:1px,color:#78350f
     class mods0 mod0
     classDef mod1 fill:#f1f5f999,stroke:#94a3b8,stroke-width:1px,color:#334155
@@ -111,6 +115,8 @@ flowchart TB
     class mods8 mod8
     classDef mod9 fill:#f1f5f999,stroke:#94a3b8,stroke-width:1px,color:#334155
     class mods9 mod9
+    classDef mod10 fill:#f1f5f999,stroke:#94a3b8,stroke-width:1px,color:#334155
+    class mods10 mod10
     classDef modshared fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,stroke-dasharray:4 3,color:#334155
     class mods_shared modshared
     classDef helper fill:#ffffff,stroke:#cbd5e1,stroke-width:1px,color:#475569

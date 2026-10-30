@@ -13,6 +13,18 @@ include { ASSEMBLY } from './workflows/assembly.nf'
 // ── Router ─────────────────────────────────────────────────────────────────
 workflow {
 
+    if (params.run_medi) {
+        if (params.workflow != 'mgx')
+            error "ERROR: run_medi is supported only with workflow mgx; MEDI quantifies food DNA (not ${params.workflow})."
+        if (!params.run_functional_profiling)
+            error "ERROR: run_medi requires run_functional_profiling true."
+        if (params.humann_version != 'humann_v4a')
+            error "ERROR: run_medi requires humann_version humann_v4a."
+        def missing = ['medi_db', 'medi_food_matches', 'medi_food_contents'].findAll { !params[it] }
+        if (missing)
+            error "ERROR: run_medi requires: " + missing.collect { "--${it}" }.join(', ')
+    }
+
     // MEDI consumes HUMAnN's retained nucleotide-unaligned reads.
     if (params.run_medi && (params.humann_options ?: '').contains('--remove-temp-output')) {
         error "ERROR: run_medi requires HUMAnN temp reads; remove --remove-temp-output from humann_options."

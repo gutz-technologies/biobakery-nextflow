@@ -31,6 +31,18 @@ flowchart LR
         humann_feature_counts_merge("<b>humann_feature_counts_merge</b><br/>Merge the three<br/>per-feature-type count tables…")
         humann_log_counts("<b>humann_log_counts</b><br/>Read and species counts, taken<br/>from the per-sample HUMAnN…")
     end
+    subgraph MEDI
+        direction TB
+        kraken("<b>kraken</b><br/>Classify HUMAnN<br/>nucleotide-unaligned reads…")
+        architeuthis_filter("<b>architeuthis_filter</b><br/>Filter Kraken2 mappings by<br/>consistency, entropy and…")
+        kraken_report("<b>kraken_report</b><br/>Build a Kraken2 report from<br/>the filtered mappings.")
+        count_taxa("<b>count_taxa</b><br/>Count D/G/S taxa with Bracken,<br/>one task per sample.")
+        merge_taxonomy("<b>merge_taxonomy</b><br/>Merge nonempty Bracken tables<br/>across samples, one task per…")
+        add_lineage("<b>add_lineage</b><br/>Add taxonomic lineages to the<br/>merged D/G/S tables.")
+        quantify("<b>quantify</b><br/>Quantify food abundance and<br/>content from the lineage…")
+        convert_medi_to_biom["<b>convert_medi_to_biom</b><br/>Convert food abundance,<br/>nutrients and compounds to…"]
+        multiqc["<b>multiqc</b><br/>Summarise filtered Kraken2<br/>reports with MultiQC."]
+    end
     subgraph VIRAL_PROFILING
         direction TB
         baqlava["<b>baqlava</b><br/>BAQLaVa — viral profiling"]
@@ -79,6 +91,7 @@ flowchart LR
     humann --> humann_join
     humann --> humann_renorm
     humann --> humann_log_counts
+    humann --> kraken
     humann_regroup_ecs --> humann_join
     humann_regroup_ecs --> humann_renorm
     humann_regroup --> humann_rename
@@ -90,6 +103,14 @@ flowchart LR
     humann_count_features --> stage_report_input
     humann_feature_counts_merge --> stage_report_input
     humann_log_counts --> stage_report_input
+    kraken --> architeuthis_filter
+    architeuthis_filter --> kraken_report
+    kraken_report --> count_taxa
+    kraken_report --> multiqc
+    count_taxa --> merge_taxonomy
+    merge_taxonomy --> add_lineage
+    add_lineage --> quantify
+    quantify --> convert_medi_to_biom
     sample2markers --> strainphlan
     stage_report_input --> identify_inputs
     stage_report_input --> feature_table
@@ -107,6 +128,7 @@ flowchart LR
     style QUALITY_CONTROL fill:#dbeafe22,stroke:#3b82f6,stroke-width:1px,stroke-dasharray:4 3,color:#3b82f6
     style TAXONOMIC_PROFILING fill:#dcfce722,stroke:#22c55e,stroke-width:1px,stroke-dasharray:4 3,color:#22c55e
     style FUNCTIONAL_PROFILING fill:#ede9fe22,stroke:#8b5cf6,stroke-width:1px,stroke-dasharray:4 3,color:#8b5cf6
+    style MEDI fill:#f1f5f922,stroke:#94a3b8,stroke-width:1px,stroke-dasharray:4 3,color:#94a3b8
     style VIRAL_PROFILING fill:#ffedd522,stroke:#f97316,stroke-width:1px,stroke-dasharray:4 3,color:#f97316
     style STRAIN_PROFILING fill:#ccfbf122,stroke:#14b8a6,stroke-width:1px,stroke-dasharray:4 3,color:#14b8a6
     style MGX fill:#f1f5f922,stroke:#94a3b8,stroke-width:1px,stroke-dasharray:4 3,color:#94a3b8
@@ -120,14 +142,16 @@ flowchart LR
     class metaphlan,metaphlan_bzip,metaphlan_merge,metaphlan_species_counts stage2
     classDef stage3 fill:#ede9fe,stroke:#8b5cf6,stroke-width:1.5px,color:#4c1d95
     class humann,humann_regroup_ecs,humann_regroup,humann_rename,humann_join,humann_renorm,humann_join_relab,humann_count_features,humann_feature_counts_merge,humann_log_counts stage3
-    classDef stage4 fill:#ffedd5,stroke:#f97316,stroke-width:1.5px,color:#7c2d12
-    class baqlava stage4
-    classDef stage5 fill:#ccfbf1,stroke:#14b8a6,stroke-width:1.5px,color:#134e4a
-    class sample2markers,strainphlan stage5
-    classDef stage6 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
-    class stage_report_input,version_log stage6
-    classDef stage7 fill:#fce7f3,stroke:#ec4899,stroke-width:1.5px,color:#831843
-    class identify_inputs,feature_table,trim_taxonomy,add_ec_names,vis_report,archive_output stage7
+    classDef stage4 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
+    class kraken,architeuthis_filter,kraken_report,count_taxa,merge_taxonomy,add_lineage,quantify,convert_medi_to_biom,multiqc stage4
+    classDef stage5 fill:#ffedd5,stroke:#f97316,stroke-width:1.5px,color:#7c2d12
+    class baqlava stage5
+    classDef stage6 fill:#ccfbf1,stroke:#14b8a6,stroke-width:1.5px,color:#134e4a
+    class sample2markers,strainphlan stage6
+    classDef stage7 fill:#f1f5f9,stroke:#94a3b8,stroke-width:1.5px,color:#334155
+    class stage_report_input,version_log stage7
+    classDef stage8 fill:#fce7f3,stroke:#ec4899,stroke-width:1.5px,color:#831843
+    class identify_inputs,feature_table,trim_taxonomy,add_ec_names,vis_report,archive_output stage8
 
     linkStyle default stroke:#cbd5e1,stroke-width:1.5px
-    linkStyle 0,1,3,4,5,7,8,9,10,13,14,15,17,18,27,30,32,33,34,36,37,38,39,40 stroke:#475569,stroke-width:2px
+    linkStyle 0,1,3,4,5,7,8,9,10,13,14,15,17,18,24,28,31,33,34,35,45,46,47,48,49 stroke:#475569,stroke-width:2px
