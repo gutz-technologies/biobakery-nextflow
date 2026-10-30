@@ -1,5 +1,13 @@
 # Release history
 
+## Unreleased
+
+- Optional MEDI food DNA quantification for MGX, from HUMAnN 4's retained
+  nucleotide-unaligned reads: Kraken2, Architeuthis, D/G/S Bracken counts,
+  food abundance/content, BIOM conversion and MultiQC. Database and workflow
+  guards fail before profiling. MGX profiling and MEDI support database-free
+  stub runs.
+
 ## 0.0.4 — TBD
 
 Everything else in upstream 3.2, plus a layout cleanup. ~8,500 lines and 61 new

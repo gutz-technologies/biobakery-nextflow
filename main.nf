@@ -13,6 +13,32 @@ include { ASSEMBLY } from './workflows/assembly.nf'
 // ── Router ─────────────────────────────────────────────────────────────────
 workflow {
 
+    if (params.run_medi) {
+        if (params.workflow != 'mgx')
+            error "ERROR: run_medi is supported only with workflow mgx; MEDI quantifies food DNA (not ${params.workflow})."
+        if (!(params.medi_input in ['humann', 'kneaddata']))
+            error "ERROR: medi_input must be humann or kneaddata (got ${params.medi_input})."
+        if (params.medi_input == 'kneaddata' && !params.run_qc)
+            error "ERROR: medi_input kneaddata requires run_qc true."
+        if (params.medi_input == 'humann' && !params.run_functional_profiling)
+            error "ERROR: medi_input humann requires run_functional_profiling true."
+        if (params.medi_input == 'humann' && params.humann_version != 'humann_v4a')
+            error "ERROR: medi_input humann requires humann_version humann_v4a."
+        def missing = ['medi_db', 'medi_food_matches', 'medi_food_contents'].findAll { !params[it] }
+        if (missing)
+            error "ERROR: run_medi requires: " + missing.collect { "--${it}" }.join(', ')
+    }
+
+    // With medi_input humann, MEDI consumes HUMAnN's retained nucleotide-unaligned reads.
+    if (params.run_medi && params.medi_input == 'humann' && (params.humann_options ?: '').contains('--remove-temp-output')) {
+        error "ERROR: run_medi requires HUMAnN temp reads; remove --remove-temp-output from humann_options."
+    }
+    // Bypassing the nucleotide search means HUMAnN never writes those reads.
+    if (params.run_medi && params.medi_input == 'humann' &&
+        (params.humann_bypass_nucleotide_search || (params.humann_options ?: '').contains('--bypass-nucleotide-search'))) {
+        error "ERROR: medi_input humann needs HUMAnN's nucleotide-unaligned reads; drop the nucleotide-search bypass or use --medi_input kneaddata."
+    }
+
     // Validate required params for read-based workflows. mgx_mtx is the
     // exception: it takes two input folders instead of one, and validates them
     // itself, mirroring wmgx_wmtx.py replacing --input with --input-metagenome

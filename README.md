@@ -766,6 +766,62 @@ the report was built from, and point a later standalone run straight at it.
 | `--run_humann_rename` | `true` | Add human-readable names (`humann_rename_table`) |
 | `--run_humann_merge` | `true` | Merge per-sample tables into one matrix (`humann_join_tables`) |
 
+### Food DNA quantification (MEDI; MGX only)
+
+| Param | Default | Description |
+|---|---|---|
+| `--run_medi` | `false` | Quantify foods with MEDI (MGX only) |
+| `--medi_input` | `humann` | Reads MEDI classifies: `humann` (HUMAnN 4 nucleotide-unaligned reads; needs functional profiling) or `kneaddata` (full cleaned reads, right after QC) |
+| `--medi_db` | *required when enabled* | Full MEDI Kraken2/Bracken DB, including `taxo.k2d`, `taxonomy/` and 150 bp Bracken distributions |
+| `--medi_food_matches` | *required when enabled* | MEDI food-to-taxon matches table, passed first to `quantify.R` |
+| `--medi_food_contents` | *required when enabled* | MEDI food contents table, passed second to `quantify.R` |
+| `--medi_container` | `colinbrislawn/medi:1.0.1` | Kraken2, Architeuthis, Bracken and MEDI tools |
+| `--medi_biom_container` | `colinbrislawn/metaphlan:4.2.4` | Python BIOM converter dependencies |
+| `--medi_multiqc_container` | `ghcr.io/multiqc/multiqc:v1.22.3` | MultiQC |
+
+With `--medi_input humann` (default), requires `--workflow mgx
+--run_functional_profiling true --humann_version humann_v4a` and taxonomic
+profiling enabled. Do not pass `--remove-temp-output` in
+`--humann_options` or bypass the nucleotide search: MEDI consumes `<sample>_humann_temp/<sample>_bowtie2_unaligned.fa`.
+These are the reads before the translated search, already QC'd and single-end;
+MEDI skips fastp. MTX and MGX+MTX are rejected because MEDI quantifies food DNA.
+Use QC'd input when bypassing KneadData.
+
+Outputs under `<outdir>/medi/`: per-sample Kraken2 reports and filtered mappings,
+D/G/S Bracken counts, merged taxonomy and lineage counts, `food_abundance.csv`,
+`food_content.csv`, three BIOM tables under `biom/`, and `multiqc_report.html`.
+Empty Bracken levels are excluded from merging; if every level is empty, no food
+or BIOM tables are produced. The reference's empty-level fallbacks are retained.
+
+The full Kraken2 database needs about **415 GB RAM**. Set `--max_memory 450.GB`
+(or a suitable higher ceiling) on a node with enough memory; the default 128 GB
+cap is too small. Kraken2 requests 8 CPUs and 24 hours, capped by `max_*`.
+Enable Docker or Apptainer in the runtime config. The two kinds of MEDI input
+reach tasks differently:
+
+- `--medi_db` is read in place, not staged: Nextflow does not know Kraken2,
+  Bracken and Architeuthis need it. The path must already exist inside every
+  task, e.g. a shared filesystem or a bind mount, or synced to each cloud worker.
+- `--medi_food_matches` and `--medi_food_contents` are staged as process inputs
+  from where Nextflow runs. They must be readable from the launch (head) node:
+  a local path there, or an `s3://` / `https://` path. A path that exists only
+  on the workers fails with `Can't stage file`.
+
+Local profiles otherwise expect tools
+on PATH. Also configure compatible HUMAnN 4 and MetaPhlAn tools/databases and the
+KneadData host database, as for an ordinary MGX run.
+
+```bash
+nextflow run . -profile local --workflow mgx --readsdir /path/to/fastqs \
+  --run_medi true --humann_version humann_v4a \
+  --medi_db /path/to/medi-db \
+  --medi_food_matches /path/to/food_matches.csv \
+  --medi_food_contents /path/to/food_contents.csv \
+  --max_memory 450.GB --outdir results
+# Add the usual --host_genome, --metaphlan_db/index and --humann_db settings,
+# plus a runtime config selecting compatible tools and enabling containers.
+```
+
 ### Viral profiling options (BAQLaVa)
 
 | Parameter | Default | Description |

@@ -14,9 +14,9 @@
 |---|---|
 | Multi-workflow router | `main.nf` routes via `--workflow mgx\|mtx\|mgx_mtx\|16s\|vis\|stats\|assembly` |
 | nf-core-style module layout | `modules/` → `subworkflows/` → `workflows/` layering |
-| MGX workflow | KneadData → MetaPhlAn → HUMAnN → regroup/rename/merge → BAQLaVa (opt) → StrainPhlAn (opt) |
+| MGX workflow | KneadData → MetaPhlAn → HUMAnN → regroup/rename/merge + MEDI food DNA (opt, HUMAnN 4) → BAQLaVa (opt) → StrainPhlAn (opt) |
 | SGB pipeline workflow | KneadData → MEGAHIT → Bowtie2+depth → MetaBAT2 → CheckM2 → PhyloPhlAn → Mash → SGB clustering |
-| Feature flag toggles | `run_qc`, `run_taxonomic_profiling`, `run_functional_profiling`, `run_viral_profiling`, `run_strain_profiling` |
+| Feature flag toggles | `run_qc`, `run_taxonomic_profiling`, `run_functional_profiling`, `run_viral_profiling`, `run_strain_profiling`, `run_medi` |
 | HUMAnN post-processing | `humann_regroup`, `humann_rename`, `humann_merge` — all implemented |
 | StrainPhlAn subworkflow | `sample2markers` → `strainphlan` per clade; SGB mode |
 | BAQLaVa viral profiling | `subworkflows/viral_profiling.nf`; `--run_viral_profiling` |
@@ -58,6 +58,7 @@ biobakery-nextflow/
 │   ├── quality_control.nf               # KneadData (paired + single-end routing)
 │   ├── taxonomic_profiling.nf           # MetaPhlAn + bzip + merge
 │   ├── functional_profiling.nf          # HUMAnN + regroup + rename + merge
+│   ├── medi.nf                         # HUMAnN unaligned reads → food DNA quantification
 │   ├── viral_profiling.nf               # BAQLaVa (expandable — see §5)
 │   └── strain_profiling.nf              # sample2markers → strainphlan per clade
 │
@@ -66,6 +67,16 @@ biobakery-nextflow/
 │   ├── metaphlan/main.nf                # metaphlan, metaphlan_bzip, metaphlan_merge
 │   ├── humann/main.nf                   # humann
 │   ├── strainphlan/main.nf              # sample2markers, strainphlan
+│   ├── medi/                            # One main.nf per tool
+│   │   ├── kraken/main.nf
+│   │   ├── architeuthis_filter/main.nf
+│   │   ├── kraken_report/main.nf
+│   │   ├── count_taxa/main.nf            # D/G/S in one task per sample
+│   │   ├── merge_taxonomy/main.nf
+│   │   ├── add_lineage/main.nf
+│   │   ├── quantify/main.nf
+│   │   ├── convert_medi_to_biom/main.nf
+│   │   └── multiqc/main.nf
 │   ├── viral/
 │   │   └── baqlava/main.nf              # baqlava
 │   ├── assembly/

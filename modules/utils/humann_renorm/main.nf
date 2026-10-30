@@ -28,4 +28,9 @@ process humann_renorm {
         --units relab \\
         --special n
     """
+
+    stub:
+    """
+    touch ${sample}_${feature}_relab_${params.humann_version}.tsv
+    """
 }

@@ -95,3 +95,41 @@ which rebuilds every workflow's DAG with `nextflow run -preview` and fails if
 pipeline. That catches a config that does not parse, a broken `include`, a
 channel wired to nothing, and documentation that has drifted from the code —
 which is most of what changes between real test runs.
+
+## MEDI without databases
+
+MGX profiling and MEDI have `stub:` blocks. They exercise channel wiring and
+published filenames; their placeholder tables do not validate biology or tools.
+Use a small resource override so the full MEDI DB's 415 GB request can run locally:
+
+```bash
+cat > /tmp/medi-stub.config <<'EOF'
+process {
+    withName: '.*' {
+        cpus = 1
+        memory = '1.GB'
+    }
+}
+EOF
+nextflow run . -stub-run -c /tmp/medi-stub.config \
+  --readsdir tests/data/rawfastq --host_genome /dummy/host \
+  --humann_version humann_v4a --run_medi true \
+  --medi_db /dummy/medi --medi_food_matches /dummy/matches.csv \
+  --medi_food_contents /dummy/contents.csv \
+  --run_vis false --run_stats false --log_versions false \
+  --outdir tests/results/medi-stub -work-dir tests/work/medi-stub
+```
+
+Repeat with `--run_medi false` for the ordinary MGX path. Stub food-table inputs
+use the bundled placeholder; real runs stage the configured tables. MEDI outputs
+appear under `<outdir>/medi/`, including D/G/S counts, food CSVs, BIOM placeholders
+and a MultiQC placeholder. With Nextflow 26, export `NXF_SYNTAX_PARSER=v1` for the
+repository's legacy syntax; `NXF_OFFLINE=true` disables update checks offline.
+
+Guard checks need no databases: enable MEDI with `--humann_version humann_v4a`,
+then try `--humann_options=--remove-temp-output`,
+`--humann_bypass_nucleotide_search true`, `--workflow mtx`,
+`--workflow mgx_mtx`, `--run_functional_profiling false`, unset MEDI database/table
+params, or `--humann_version humann_v37`. Each must exit nonzero with its specific
+error before profiling starts. Supply the three dummy MEDI params for the temp
+output and version checks so the missing-parameter guard does not fire first.

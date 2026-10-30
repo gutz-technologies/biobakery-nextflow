@@ -42,4 +42,9 @@ process humann_rename {
         -n ${names} \\
         -o ${sample}_${params.humann_regroup_grouping}_named_${params.humann_version}.tsv
     """
+
+    stub:
+    """
+    touch ${sample}_${params.humann_regroup_grouping}_named_${params.humann_version}.tsv
+    """
 }

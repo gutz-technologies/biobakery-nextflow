@@ -61,7 +61,10 @@ WORKFLOWS = [
 # Toggles that are off by default but worth showing in the diagram, so the
 # optional stages appear rather than being silently absent.
 EXTRA_ON = {
-    "mgx": ["--run_viral_profiling", "true", "--run_strain_profiling", "true"],
+    "mgx": ["--run_viral_profiling", "true", "--run_strain_profiling", "true",
+            "--run_medi", "true", "--humann_version", "humann_v4a",
+            "--medi_db", "/stub/medi", "--medi_food_matches", "/stub/food_matches.csv",
+            "--medi_food_contents", "/stub/food_contents.csv"],
     "mtx": ["--run_strain_profiling", "true"],
     "mgx_mtx": ["--run_strain_profiling", "true"],
 }
@@ -173,6 +176,9 @@ def simplify(mermaid, catalog):
     for line in mermaid.split("\n"):
         if SUBGRAPH.match(line) and "-->" not in line:
             name = SUBGRAPH.match(line).group(1).strip().strip('"')
+            # Newer Nextflow emits qualified ids and an explicit stage label.
+            if name.endswith(']') and ' [' in name:
+                name = name.rsplit(' [', 1)[1][:-1].strip('"')
             stack.append(name)
             continue
         if line.strip() == "end":
@@ -182,7 +188,7 @@ def simplify(mermaid, catalog):
 
         match = NODE_PROCESS.match(line)
         if match:
-            processes[match.group(1)] = match.group(2)
+            processes[match.group(1)] = match.group(2).strip('"')
             membership[match.group(1)] = [s for s in stack if s.strip()]
             continue
         match = NODE_OTHER.match(line)
@@ -571,7 +577,7 @@ def architecture_diagram():
         token = token_of.get(wf, "")
         summary = _wrap(re.sub(r'["<>`]', "", workflows[wf]["summary"]), 34, 3)
         used = sorted({s for s, _e, _src in workflows[wf]["includes"]
-                       if s in stages}, key=_stage_rank)
+                       if s in stages}, key=lambda s: (_stage_rank(s), s))
         direct = sum(len(v) for v in workflows[wf]["modules"].values())
         detail = []
         if used:
@@ -761,7 +767,7 @@ def reference_page(rendered, catalog, architecture):
         "  below the diagram, not in the picture.",
         "",
         "Optional stages that are off by default (`--run_viral_profiling`,",
-        "`--run_strain_profiling`) are drawn as if enabled, so the diagram shows",
+        "`--run_strain_profiling`, `--run_medi`) are drawn as if enabled, so the diagram shows",
         "everything a workflow can do.",
         "",
     ]

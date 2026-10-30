@@ -18,6 +18,8 @@ process humann {
     tuple val(sample), path("${sample}_reactions_${params.humann_version}.tsv"),      emit: reactions,     optional: true
     tuple val(sample), path("${sample}_humann_${params.humann_version}.log"),         emit: log,           optional: true
 
+    tuple val(sample), path("${sample}_humann_temp/${sample}_bowtie2_unaligned.fa"), emit: unaligned_reads, optional: true
+
     when:
     params.run_functional_profiling
 
@@ -53,5 +55,14 @@ process humann {
         mv ${sample}_pathabundance.tsv   ${sample}_pathabundance_${params.humann_version}.tsv 2>/dev/null || true
         mv ${sample}_pathcoverage.tsv    ${sample}_pathcoverage_${params.humann_version}.tsv  2>/dev/null || true
     fi
+    """
+
+    stub:
+    """
+    touch ${sample}_genefamilies_${params.humann_version}.tsv
+    touch ${sample}_pathabundance_${params.humann_version}.tsv
+    touch ${sample}_humann_${params.humann_version}.log
+    mkdir -p ${sample}_humann_temp
+    touch ${sample}_humann_temp/${sample}_bowtie2_unaligned.fa
     """
 }
