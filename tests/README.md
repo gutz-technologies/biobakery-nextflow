@@ -127,7 +127,8 @@ and a MultiQC placeholder. With Nextflow 26, export `NXF_SYNTAX_PARSER=v1` for t
 repository's legacy syntax; `NXF_OFFLINE=true` disables update checks offline.
 
 Guard checks need no databases: enable MEDI with `--humann_version humann_v4a`,
-then try `--humann_options=--remove-temp-output`, `--workflow mtx`,
+then try `--humann_options=--remove-temp-output`,
+`--humann_bypass_nucleotide_search true`, `--workflow mtx`,
 `--workflow mgx_mtx`, `--run_functional_profiling false`, unset MEDI database/table
 params, or `--humann_version humann_v37`. Each must exit nonzero with its specific
 error before profiling starts. Supply the three dummy MEDI params for the temp

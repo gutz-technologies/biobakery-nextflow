@@ -782,7 +782,7 @@ the report was built from, and point a later standalone run straight at it.
 With `--medi_input humann` (default), requires `--workflow mgx
 --run_functional_profiling true --humann_version humann_v4a` and taxonomic
 profiling enabled. Do not pass `--remove-temp-output` in
-`--humann_options`: MEDI consumes `<sample>_humann_temp/<sample>_bowtie2_unaligned.fa`.
+`--humann_options` or bypass the nucleotide search: MEDI consumes `<sample>_humann_temp/<sample>_bowtie2_unaligned.fa`.
 These are the reads before the translated search, already QC'd and single-end;
 MEDI skips fastp. MTX and MGX+MTX are rejected because MEDI quantifies food DNA.
 Use QC'd input when bypassing KneadData.
