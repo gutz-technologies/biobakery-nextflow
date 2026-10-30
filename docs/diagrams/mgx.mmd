@@ -33,7 +33,7 @@ flowchart LR
     end
     subgraph MEDI
         direction TB
-        kraken("<b>kraken</b><br/>Classify HUMAnN<br/>nucleotide-unaligned reads…")
+        kraken("<b>kraken</b><br/>Classify reads (HUMAnN<br/>unaligned FASTA or KneadData…")
         architeuthis_filter("<b>architeuthis_filter</b><br/>Filter Kraken2 mappings by<br/>consistency, entropy and…")
         kraken_report("<b>kraken_report</b><br/>Build a Kraken2 report from<br/>the filtered mappings.")
         count_taxa("<b>count_taxa</b><br/>Count D/G/S taxa with Bracken,<br/>one task per sample.")

@@ -235,7 +235,7 @@ flowchart LR
     end
     subgraph MEDI
         direction TB
-        kraken("<b>kraken</b><br/>Classify HUMAnN<br/>nucleotide-unaligned reads…")
+        kraken("<b>kraken</b><br/>Classify reads (HUMAnN<br/>unaligned FASTA or KneadData…")
         architeuthis_filter("<b>architeuthis_filter</b><br/>Filter Kraken2 mappings by<br/>consistency, entropy and…")
         kraken_report("<b>kraken_report</b><br/>Build a Kraken2 report from<br/>the filtered mappings.")
         count_taxa("<b>count_taxa</b><br/>Count D/G/S taxa with Bracken,<br/>one task per sample.")
@@ -382,7 +382,7 @@ flowchart LR
 | `humann_renorm` | Renormalise a per-sample HUMAnN table from RPK to relative abundance. | `modules/utils/humann_renorm/main.nf` | `<outdir>/<subdir>humann/<params.humann_version>/relab/<feature>` |
 | `identify_inputs` | Identify the bioBakery data files in an input folder. | `modules/vis/identify_inputs/main.nf` | `<outdir>/<report_type>` |
 | `kneaddata_read_counts` | Compile the per-sample KneadData logs into one read count table. | `modules/kneaddata/main.nf` | `<outdir>/<subdir>kneaddata/merged` |
-| `kraken` | Classify HUMAnN nucleotide-unaligned reads with the MEDI Kraken2 database. | `modules/medi/kraken/main.nf` | `<outdir>/<subdir>medi/kraken2/raw` |
+| `kraken` | Classify reads (HUMAnN unaligned FASTA or KneadData FASTQ) with the MEDI Kraken2 database. | `modules/medi/kraken/main.nf` | `<outdir>/<subdir>medi/kraken2/raw` |
 | `kraken_report` | Build a Kraken2 report from the filtered mappings. | `modules/medi/kraken_report/main.nf` | `<outdir>/<subdir>medi/kraken2` |
 | `merge_taxonomy` | Merge nonempty Bracken tables across samples, one task per rank. | `modules/medi/merge_taxonomy/main.nf` | `<outdir>/<subdir>medi/merged` |
 | `metaphlan` | MetaPhlAn — taxonomic profiling | `modules/metaphlan/main.nf` | `<outdir>/<subdir>metaphlan/<params.metaphlan_index>` |
