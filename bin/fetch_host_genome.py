@@ -83,11 +83,11 @@ def main():
     p.add_argument("--keep-tarball", action="store_true", help="keep the downloaded .tar.gz")
     args = p.parse_args()
 
-    if args.check:
-        index_dir = args.dir
-    else:
+    index_dir = args.dir if args.check else os.path.join(args.dir, NAME)
+    problems = check(index_dir)
+    # An index already unpacked and matching the pin needs no download.
+    if problems and not args.check:
         os.makedirs(args.dir, exist_ok=True)
-        index_dir = os.path.join(args.dir, NAME)
         tarball = os.path.join(args.dir, NAME + ".tar.gz")
         if not os.path.isfile(tarball) or sha256(tarball) != TARBALL_SHA256:
             print(f"Downloading {URL} ({TARBALL_BYTES / 1e9:.1f} GB)", file=sys.stderr)
@@ -100,8 +100,8 @@ def main():
                 tar.extract(m, index_dir, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))
         if not args.keep_tarball:
             os.remove(tarball)
+        problems = check(index_dir)
 
-    problems = check(index_dir)
     if problems:
         sys.exit(f"ERROR: {index_dir} is not {NAME}:\n  " + "\n  ".join(problems))
     print(f"OK {index_dir} is {NAME} (tarball sha256 {TARBALL_SHA256})")
