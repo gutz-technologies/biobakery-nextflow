@@ -1,5 +1,12 @@
 # Release history
 
+## Unreleased
+
+- Pinned human host reference: `bin/fetch_host_genome.py` downloads KneadData
+  0.12's T2T-CHM13 v1.1 Bowtie2 index (`Homo_sapiens_hg39_T2T_Bowtie2_v0.1`),
+  checks the tarball and every index file by SHA-256, and verifies existing
+  copies with `--check`. README examples use it.
+
 ## 0.0.4 — TBD
 
 Everything else in upstream 3.2, plus a layout cleanup. ~8,500 lines and 61 new

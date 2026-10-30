@@ -161,7 +161,7 @@ conda activate biobakery
 nextflow run main.nf -profile local \
   --readsdir /path/to/fastqs \
   --outdir   /path/to/results \
-  --host_genome  /path/to/kneaddata/hg38 \
+  --host_genome  /path/to/kneaddata_databases/Homo_sapiens_hg39_T2T_Bowtie2_v0.1 \
   --metaphlan_db  /path/to/metaphlan_db \
   --humann_db     /path/to/humann_db
 ```
@@ -180,7 +180,7 @@ nextflow run main.nf \
   --workflow     mgx \
   --readsdir     /path/to/fastqs \
   --outdir       results \
-  --host_genome /path/to/kneaddata/hg38 \
+  --host_genome /path/to/kneaddata_databases/Homo_sapiens_hg39_T2T_Bowtie2_v0.1 \
   --metaphlan_db /path/to/metaphlan_db \
   --humann_db    /path/to/humann_db
 ```
@@ -739,7 +739,7 @@ the report was built from, and point a later standalone run straight at it.
 
 | Parameter | Default | Description |
 |---|---|---|
-| `--host_genome` | *required* | KneadData Bowtie2 reference directory (hg38, mouse, rRNA, etc.) |
+| `--host_genome` | *required* | KneadData Bowtie2 reference directory (hg38, mouse, rRNA, etc.). For human, the [pinned T2T reference](#pinned-human-reference-t2t-chm13) |
 | `--kneaddata_bypass_trim` | `false` | Skip Trimmomatic trimming step |
 | `--kneaddata_remove_intermediate_files` | `true` | Delete intermediate files to save disk |
 
@@ -956,10 +956,33 @@ nextflow run main.nf -profile harvard_rc \
 
 ### Downloading databases
 
-**KneadData:**
+**KneadData:** use the pinned human reference below. `kneaddata_database --download
+human_genome bowtie2` fetches whichever file the installed KneadData release
+points at and records nothing about it.
+
+#### Pinned human reference (T2T-CHM13)
+
+The reproducible human host database is KneadData 0.12's own default, pinned
+by checksum. `bin/fetch_host_genome.py` downloads it, refuses any other bytes,
+and unpacks the directory `--host_genome` takes:
+
 ```sh
-kneaddata_database --download host_genome bowtie2 /path/to/kneaddata_databases
+bin/fetch_host_genome.py /path/to/kneaddata_databases
+# -> /path/to/kneaddata_databases/Homo_sapiens_hg39_T2T_Bowtie2_v0.1
+bin/fetch_host_genome.py --check /path/to/existing/copy   # verify a shared copy
 ```
+
+| | |
+|---|---|
+| Name | `Homo_sapiens_hg39_T2T_Bowtie2_v0.1` (Bowtie2 index prefix `hg_39`) |
+| Assembly | T2T-CHM13 v1.1 ([GCA_009914755.3](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_009914755.3/)): chr1–22, X and chrM. No Y |
+| URL | https://huttenhower.sph.harvard.edu/kneadData_databases/Homo_sapiens_hg39_T2T_Bowtie2_v0.1.tar.gz |
+| Tarball | 3,824,531,235 bytes, SHA-256 `01bda80e810c56e26092a8e7ab2a4a0bb32c517cf77628cbcddedfaf0738a966` |
+| Index files | SHA-256 of each `.bt2` file in `bin/fetch_host_genome.py` |
+
+The same server also has a `_v0.2` tarball, which KneadData 0.12 does not
+download by default; it has not been tested here. The Harvard and Tufts site
+profiles still default to their local hg38 copies.
 
 **MetaPhlAn** (do not put multiple indexes in the same directory):
 ```sh
@@ -1360,6 +1383,7 @@ biobakery-nextflow/
 │   ├── make_diagrams.py                 # generates docs/diagrams/ + workflow_reference.md
 │   ├── check_profile_resources.py       # CI guard: no profile deletes a resource request
 │   ├── check_fastq_inputs.py            # FASTQ integrity check, standalone or per sample
+│   ├── fetch_host_genome.py             # pinned T2T human reference: download + SHA-256 check
 │   ├── scripts/                         # Python helpers (from anadama2 assembly_tasks/)
 │   │   ├── checkm_wrangling.py
 │   │   ├── mag_n50_calc.py
