@@ -13,6 +13,11 @@ include { ASSEMBLY } from './workflows/assembly.nf'
 // ── Router ─────────────────────────────────────────────────────────────────
 workflow {
 
+    // MEDI consumes HUMAnN's retained nucleotide-unaligned reads.
+    if (params.run_medi && (params.humann_options ?: '').contains('--remove-temp-output')) {
+        error "ERROR: run_medi requires HUMAnN temp reads; remove --remove-temp-output from humann_options."
+    }
+
     // Validate required params for read-based workflows. mgx_mtx is the
     // exception: it takes two input folders instead of one, and validates them
     // itself, mirroring wmgx_wmtx.py replacing --input with --input-metagenome
