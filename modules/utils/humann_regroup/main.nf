@@ -24,6 +24,11 @@ process humann_regroup {
         -g ${params.humann_regroup_grouping} \\
         -o ${sample}_${params.humann_regroup_grouping}_${params.humann_version}.tsv
     """
+
+    stub:
+    """
+    touch ${sample}_${params.humann_regroup_grouping}_${params.humann_version}.tsv
+    """
 }
 
 // Regroup UniRef gene families to level-4 enzyme commission numbers.
@@ -53,5 +58,10 @@ process humann_regroup_ecs {
         -i ${genefamilies} \\
         -g ${groups} \\
         -o ${sample}_ecs_${params.humann_version}.tsv
+    """
+
+    stub:
+    """
+    touch ${sample}_ecs_${params.humann_version}.tsv
     """
 }

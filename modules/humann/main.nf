@@ -54,4 +54,11 @@ process humann {
         mv ${sample}_pathcoverage.tsv    ${sample}_pathcoverage_${params.humann_version}.tsv  2>/dev/null || true
     fi
     """
+
+    stub:
+    """
+    touch ${sample}_genefamilies_${params.humann_version}.tsv
+    touch ${sample}_pathabundance_${params.humann_version}.tsv
+    touch ${sample}_humann_${params.humann_version}.log
+    """
 }

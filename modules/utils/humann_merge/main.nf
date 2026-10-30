@@ -41,6 +41,11 @@ process humann_join {
         --input renamed \\
         --output merged_${label}_${params.humann_version}.tsv
     """
+
+    stub:
+    """
+    touch merged_${label}_${params.humann_version}.tsv
+    """
 }
 
 // Count how many features each sample has above zero, per feature type.
@@ -69,6 +74,11 @@ process humann_count_features {
         --ignore-un-features \\
         --ignore-stratification
     """
+
+    stub:
+    """
+    touch humann_${label}_relab_counts.tsv
+    """
 }
 
 // Merge the three per-feature-type count tables into one
@@ -91,6 +101,11 @@ process humann_feature_counts_merge {
         --input counts \\
         --output humann_feature_counts.tsv \\
         --file_name _relab_counts.tsv
+    """
+
+    stub:
+    """
+    touch humann_feature_counts.tsv
     """
 }
 
@@ -115,5 +130,10 @@ process humann_log_counts {
     get_counts_from_humann_logs.py \\
         --input logs \\
         --output humann_read_and_species_count_table.tsv
+    """
+
+    stub:
+    """
+    touch humann_read_and_species_count_table.tsv
     """
 }

@@ -46,6 +46,11 @@ process single_end_kneaddata {
 
     for f in *.fastq; do [ -f "\$f" ] && pigz -p ${task.cpus} "\$f"; done
     """
+
+    stub:
+    """
+    touch ${sample}_kneaddata.fastq.gz ${sample}_kneaddata.log
+    """
 }
 
 // KneadData QC — paired-end reads
@@ -95,6 +100,12 @@ process paired_end_kneaddata {
         ${sample}_kneaddata_unmatched_2.fastq.gz \\
         > ${sample}_concatenated.fastq.gz
     """
+
+    stub:
+    """
+    touch ${sample}_concatenated.fastq.gz ${sample}_kneaddata.log
+    touch ${sample}_kneaddata_paired_{1,2}.fastq.gz ${sample}_kneaddata_unmatched_{1,2}.fastq.gz
+    """
 }
 
 // Compile the per-sample KneadData logs into one read count table.
@@ -118,5 +129,10 @@ process kneaddata_read_counts {
     kneaddata_read_count_table \\
         --input logs \\
         --output kneaddata_read_count_table.tsv
+    """
+
+    stub:
+    """
+    touch kneaddata_read_count_table.tsv
     """
 }

@@ -41,6 +41,11 @@ process metaphlan {
         -o ${sample}_profile_${params.metaphlan_index}.tsv \\
         $extra_args
     """
+
+    stub:
+    """
+    touch ${sample}_profile_${params.metaphlan_index}.tsv ${sample}_bowtie2_${params.metaphlan_index}.tsv ${sample}_${params.metaphlan_index}.sam
+    """
 }
 
 // Compress MetaPhlAn SAM file (saves significant disk space)
@@ -76,6 +81,11 @@ process metaphlan_merge {
     """
     merge_metaphlan_tables.py $profiles > merged_metaphlan_profiles.tsv
     """
+
+    stub:
+    """
+    touch merged_metaphlan_profiles.tsv
+    """
 }
 
 // Count the species called in each sample, from the merged profile.
@@ -101,5 +111,10 @@ process metaphlan_species_counts {
         --include s__ \\
         --filter t__ \\
         --reduce-sample-name
+    """
+
+    stub:
+    """
+    touch metaphlan_species_counts_table.tsv
     """
 }
