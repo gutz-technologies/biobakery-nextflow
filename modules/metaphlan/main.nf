@@ -96,11 +96,9 @@ process metaphlan_species_counts {
 
     script:
     """
-    count_features.py \\
-        --input ${merged_profile} \\
+    count_metaphlan_species.py \\
+        --input "${merged_profile}" \\
         --output metaphlan_species_counts_table.tsv \\
-        --include s__ \\
-        --filter t__ \\
-        --reduce-sample-name
+        --index "${params.metaphlan_index}"
     """
 }
